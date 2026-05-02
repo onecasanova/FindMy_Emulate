@@ -118,7 +118,7 @@ def main():
         if args.count < 1:
             parser.error("--count must be >= 1")
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        out_path = os.path.join(script_dir, "..", "firmware", "src", "keys.h")
+        out_path = os.path.join(script_dir, "src", "keys.h")
         multi_key(args.count, out_path)
 
 

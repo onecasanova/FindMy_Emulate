@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find My emulation validator — bleak-based BLE scanner.
 
-Run on Linux (not macOS — CoreBluetooth filters Apple manufacturer data).
+Run on Linux or Windows (not macOS — CoreBluetooth filters Apple manufacturer data).
 
 Usage:
     pip install bleak
@@ -41,7 +41,7 @@ def classify(data: bytes) -> str:
     return f"Apple type=0x{t:02X}"
 
 
-def validate_findmy(data: bytes) -> list[str]:
+def validate_findmy(data: bytes) -> "list[str]":
     """Check a Find My payload for spec compliance. Returns list of issues."""
     issues = []
     if len(data) != 27:
@@ -84,7 +84,7 @@ async def scan(duration: float = 10.0):
                 print(f"       OK: payload passes spec check")
         print()
 
-    scanner = BleakScanner(detection_callback=callback)
+    scanner = BleakScanner(detection_callback=callback, scanning_mode="passive")
     await scanner.start()
     await asyncio.sleep(duration)
     await scanner.stop()
