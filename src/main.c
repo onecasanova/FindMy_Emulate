@@ -23,7 +23,7 @@
  * Rotation interval.
  * 30 s for demo/testing — change to (15UL * 60UL * 1000UL) for production.
  */
-#define ROTATION_INTERVAL_MS  30000UL
+#define ROTATION_INTERVAL_MS  1800000UL
 
 static int key_idx = 0;
 static int adv_id  = -1;   /* set by main() before rotation thread fires */
@@ -55,7 +55,7 @@ static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 };
 
-#define DEVICE_NAME     "YuTag"
+#define DEVICE_NAME     "YusooTag"
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
 static const struct bt_data sd[] = {
