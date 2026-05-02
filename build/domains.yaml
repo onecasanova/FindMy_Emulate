@@ -1,0 +1,7 @@
+default: broadcaster
+build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build
+domains:
+  - name: broadcaster
+    build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/broadcaster
+flash_order:
+  - broadcaster

@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster-complete.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-build.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-configure.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-download.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-install.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-mkdir.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-patch.rule"
+		},
+		{
+			"file" : "/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"broadcaster"
+		],
+		"name" : "broadcaster"
+	}
+}

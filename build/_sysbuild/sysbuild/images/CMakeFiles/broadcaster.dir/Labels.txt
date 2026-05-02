@@ -1,0 +1,13 @@
+# Target labels
+ broadcaster
+# Source files and their labels
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/CMakeFiles/broadcaster-complete.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-build.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-configure.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-download.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-install.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-mkdir.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-patch.rule
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/broadcaster-prefix/src/broadcaster-stamp/broadcaster-update.rule
