@@ -53,7 +53,7 @@ def validate_findmy(data: bytes) -> "list[str]":
     return issues
 
 
-async def scan(duration: float = 10.0):
+async def scan(duration: float = 30.0):
     print(f"Scanning for {duration}s — Apple manufacturer data (0x004C) only\n")
     seen = {}
 
