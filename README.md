@@ -99,9 +99,6 @@ None. No rework, jumpers, or external components needed.
 The DK is powered over USB-C from a PC or USB charger. There is no battery; the board
 draws approximately 5–8 mA at 3.3 V during BLE advertising (varies with interval).
 
-For battery-powered deployment, connect a 3.3 V supply to the VDD pins on the DK header.
-A 200 mAh LiPo would give an estimated runtime of > 24 h at the default advertising interval.
-
 ### RF specifications
 
 | Parameter | Value |
@@ -114,14 +111,9 @@ A 200 mAh LiPo would give an estimated runtime of > 24 h at the default advertis
 | Advertising type | `ADV_NONCONN_IND` (non-connectable, non-scannable) |
 | Advertising interval | 1000–2000 ms (0x0640–0x0C80 × 0.625 ms) |
 
-Compliance: This is a research/educational prototype. It is not CE/FCC certified for
-commercial use.
-
----
-
 ## Software environment
 
-### i. Firmware
+### Firmware
 
 #### 1. IDE and toolchain
 
@@ -161,7 +153,7 @@ Build command:
 west build -b nrf54l15dk/nrf54l15/cpuapp firmware/
 ```
 
-### ii. Other software
+### Other software
 
 #### 1. Language, version, dependencies, and lock files
 
@@ -169,7 +161,7 @@ west build -b nrf54l15dk/nrf54l15/cpuapp firmware/
 |------|--------|
 | Language | Python 3.8+ |
 | Scripts | `host/bleak_scan.py`, `scripts/generate_key.py` |
-| Dependencies | `bleak`, `cryptography`, `requests`, `srp`, `truststore` |
+| Dependencies | `bleak`, `cryptography` |
 | Lock file | `requirements.txt` (repo root) |
 
 Install:

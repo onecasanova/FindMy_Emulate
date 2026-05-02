@@ -1,5 +1,2 @@
 bleak
 cryptography
-requests
-srp
-truststore
