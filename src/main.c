@@ -55,6 +55,13 @@ static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 };
 
+#define DEVICE_NAME     "YuTag"
+#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
+
+static const struct bt_data sd[] = {
+	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
+};
+
 /* Fill the advertisement payload from keys[idx]. */
 static void set_payload(int idx)
 {
@@ -98,7 +105,7 @@ static int start_advertising(void)
 		NULL);
 	params.id = adv_id;
 
-	int err = bt_le_adv_start(&params, ad, ARRAY_SIZE(ad), NULL, 0);
+	int err = bt_le_adv_start(&params, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 	if (err) {
 		printk("bt_le_adv_start failed (err %d)\n", err);
 	}
