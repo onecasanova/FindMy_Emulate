@@ -1,0 +1,6 @@
+.DS_Store
+build/
+emb/
+*.pyc
+__pycache__/
+
