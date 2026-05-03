@@ -41,6 +41,8 @@ Generated directories such as `build/` and local environments such as `emb/` are
   - nRF54L15 SoC: https://www.nordicsemi.com/Products/nRF54L15
   - Nordic documentation portal: https://docs.nordicsemi.com/
 
+![nRF54L15 DK board](docs/assets/nRF54L15dk.jpeg)
+
 ### Additional Peripherals
 
 No external peripherals are required for the baseline demo. The DK's onboard debugger, USB serial interface, and 2.4 GHz antenna path are sufficient.
@@ -54,14 +56,7 @@ Optional peripherals to document if added later:
 
 ### Hardware Modifications
 
-The baseline build assumes an unmodified nRF54L15 DK. Add photos, rework notes, jumpers, PCB files, and enclosure files under `docs/hardware/` if the hardware changes.
-
-Suggested documentation files:
-
-- `docs/hardware/photos/`
-- `docs/hardware/schematics/`
-- `docs/hardware/pin-map.md`
-- `docs/hardware/enclosure/`
+The baseline build assumes an unmodified nRF54L15 DK. 
 
 ### Power Subsystem
 

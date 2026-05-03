@@ -1,3 +1,5 @@
 # Hardware Notes
 
-Add board photos, wiring diagrams, pin maps, schematics, rework notes, custom PCB files, and enclosure documentation here.
+This setup includes an unmodified nRF54L15 DK board.
+
+![nRF54L15 DK board](../assets/nRF54L15dk.jpeg)
