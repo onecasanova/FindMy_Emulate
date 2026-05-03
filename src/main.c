@@ -1,194 +1,340 @@
-/* Find My Emulation on nRF54L15 DK — Phase 4: Key Rotation
- *
- * Broadcasts a Find My Offline Finding advertisement and rotates
- * the P-224 public key (and derived BLE address) on a fixed interval.
- *
- * Keys live in src/keys.h — regenerate all of them with:
- *   python3 generate_key.py --count 10
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
-#include <zephyr/types.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-#include <zephyr/kernel.h>
-#include <zephyr/sys/printk.h>
+
+#include <zephyr/bluetooth/addr.h>
 #include <zephyr/bluetooth/bluetooth.h>
-#include <zephyr/bluetooth/hci.h>
+#include <zephyr/bluetooth/gap.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/util.h>
 
-#include "keys.h"
+#define APPLE_COMPANY_ID 0x004c
+#define FIND_MY_PREFIX_0 0x12
+#define FIND_MY_STATUS_AIRTAG_MASK 0x18
+#define FIND_MY_STATUS_AIRTAG_VALUE 0x10
 
-/*
- * Rotation interval.
- * 30 s for demo/testing — change to (15UL * 60UL * 1000UL) for production.
- */
-#define ROTATION_INTERVAL_MS  30000UL
+#define MAX_TRACKED_DEVICES 32
+#define SCAN_PERIOD_SECONDS (3 * 60)
+#define SCAN_WINDOW_SECONDS 15
+#define FOLLOWING_MIN_REPORTS 3
+#define FOLLOWING_MIN_SECONDS (10 * 60)
 
-static int key_idx = 0;
-static int adv_id  = -1;   /* set by main() before rotation thread fires */
-
-/*
- * Manufacturer-specific advertising data (29 bytes).
- * Zephyr prepends the AD length (0x1e) and type (0xff).
- *
- *   [0-1]  Apple company ID  0x4C 0x00
- *   [2]    OF type           0x12
- *   [3]    OF data length    0x19 (25)
- *   [4]    Status byte       0x00
- *   [5-26] key[6:28]         last 22 bytes of public key
- *   [27]   key[0] >> 6       top 2 bits of first key byte
- *   [28]   Hint              0x00
- */
-static uint8_t mfg_data[29] = {
-	0x4c, 0x00,
-	0x12, 0x19,
-	0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-	0x00
+struct airtag_record {
+	bool in_use;
+	bool seen_this_report;
+	bt_addr_le_t addr;
+	int8_t rssi;
+	uint8_t battery_level;
+	uint8_t status_byte;
+	uint8_t reports_seen;
+	uint32_t first_seen_s;
+	uint32_t last_seen_s;
 };
 
-static const struct bt_data ad[] = {
-	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
+struct parse_context {
+	bool matched_airtag;
+	uint8_t status_byte;
+	uint8_t battery_level;
+#if IS_ENABLED(CONFIG_AIRGUARD_DEBUG_APPLE_PAYLOADS)
+	bool saw_apple_payload;
+	bool saw_find_my_payload;
+	uint8_t apple_payload[29];
+	uint8_t apple_payload_len;
+#endif
 };
 
-/* Fill the advertisement payload from keys[idx]. */
-static void set_payload(int idx)
+static struct airtag_record records[MAX_TRACKED_DEVICES];
+static uint32_t report_number;
+
+static uint32_t uptime_seconds(void)
 {
-	memcpy(&mfg_data[5], &keys[idx][6], 22);
-	mfg_data[27] = keys[idx][0] >> 6;
+	return (uint32_t)(k_uptime_get() / 1000);
 }
 
-/* Build a BLE random static address from keys[idx]. */
-static void fill_addr(int idx, bt_addr_le_t *addr)
+static const char *battery_to_string(uint8_t battery_level)
 {
-	addr->type     = BT_ADDR_LE_RANDOM;
-	addr->a.val[5] = keys[idx][0] | 0xC0;
-	addr->a.val[4] = keys[idx][1];
-	addr->a.val[3] = keys[idx][2];
-	addr->a.val[2] = keys[idx][3];
-	addr->a.val[1] = keys[idx][4];
-	addr->a.val[0] = keys[idx][5];
-}
-
-/* Print current key index, BLE address, and full payload. */
-static void print_status(int idx)
-{
-	printk("Key %d/%d  addr: %02X:%02X:%02X:%02X:%02X:%02X\n",
-	       idx, NUM_KEYS - 1,
-	       keys[idx][0] | 0xC0, keys[idx][1], keys[idx][2],
-	       keys[idx][3], keys[idx][4], keys[idx][5]);
-	printk("Payload:");
-	for (int i = 0; i < (int)sizeof(mfg_data); i++) {
-		printk(" %02X", mfg_data[i]);
-	}
-	printk("\n");
-}
-
-/* Start advertising using the current adv_id and mfg_data. */
-static int start_advertising(void)
-{
-	struct bt_le_adv_param params = BT_LE_ADV_PARAM_INIT(
-		BT_LE_ADV_OPT_USE_IDENTITY,
-		0x0640,   /* 1 s min interval */
-		0x0C80,   /* 2 s max interval */
-		NULL);
-	params.id = adv_id;
-
-	int err = bt_le_adv_start(&params, ad, ARRAY_SIZE(ad), NULL, 0);
-	if (err) {
-		printk("bt_le_adv_start failed (err %d)\n", err);
-	}
-	return err;
-}
-
-/*
- * Key rotation thread.
- * Sleeps for ROTATION_INTERVAL_MS, then:
- *   1. Stops advertising
- *   2. Resets the BLE identity to the new key's address
- *   3. Updates the payload
- *   4. Restarts advertising
- */
-static void rotation_thread_fn(void *p1, void *p2, void *p3)
-{
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
-
-	while (1) {
-		k_sleep(K_MSEC(ROTATION_INTERVAL_MS));
-
-		if (adv_id < 0) {
-			continue; /* main() hasn't finished init yet */
-		}
-
-		int next = (key_idx + 1) % NUM_KEYS;
-		printk("Rotating key %d -> %d\n", key_idx, next);
-
-		bt_le_adv_stop();
-
-		bt_addr_le_t new_addr;
-		fill_addr(next, &new_addr);
-
-		int err = bt_id_reset(adv_id, &new_addr, NULL);
-		if (err < 0) {
-			printk("bt_id_reset failed (err %d) — skipping rotation\n", err);
-			/* restart advertising with old key so we don't go dark */
-			start_advertising();
-			continue;
-		}
-
-		key_idx = next;
-		set_payload(key_idx);
-
-		err = start_advertising();
-		if (err == 0) {
-			print_status(key_idx);
-			printk("Next rotation in %lu ms\n", ROTATION_INTERVAL_MS);
-		}
+	switch (battery_level) {
+	case 0:
+		return "full";
+	case 1:
+		return "medium";
+	case 2:
+		return "low";
+	case 3:
+		return "very low";
+	default:
+		return "unknown";
 	}
 }
 
-K_THREAD_DEFINE(rotation_tid, 2048,
-		rotation_thread_fn, NULL, NULL, NULL,
-		K_LOWEST_APPLICATION_THREAD_PRIO, 0, 0);
+static bool apple_find_my_data_cb(struct bt_data *data, void *user_data)
+{
+	struct parse_context *ctx = user_data;
+	const uint8_t *mfg;
+	uint16_t company_id;
+
+	if (data->type != BT_DATA_MANUFACTURER_DATA || data->data_len < 5) {
+		return true;
+	}
+
+	company_id = sys_get_le16(data->data);
+	if (company_id != APPLE_COMPANY_ID) {
+		return true;
+	}
+
+	mfg = &data->data[2];
+#if IS_ENABLED(CONFIG_AIRGUARD_DEBUG_APPLE_PAYLOADS)
+	ctx->saw_apple_payload = true;
+	ctx->apple_payload_len = MIN(data->data_len - 2, sizeof(ctx->apple_payload));
+	memcpy(ctx->apple_payload, mfg, ctx->apple_payload_len);
+#endif
+
+	if (mfg[0] != FIND_MY_PREFIX_0) {
+		return true;
+	}
+
+	ctx->status_byte = mfg[2];
+#if IS_ENABLED(CONFIG_AIRGUARD_DEBUG_APPLE_PAYLOADS)
+	ctx->saw_find_my_payload = true;
+#endif
+
+	if ((ctx->status_byte & FIND_MY_STATUS_AIRTAG_MASK) == FIND_MY_STATUS_AIRTAG_VALUE) {
+		ctx->matched_airtag = true;
+		ctx->battery_level = (ctx->status_byte >> 6) & 0x03;
+		return false;
+	}
+
+	return true;
+}
+
+static struct airtag_record *find_record(const bt_addr_le_t *addr)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+		if (records[i].in_use && bt_addr_le_cmp(&records[i].addr, addr) == 0) {
+			return &records[i];
+		}
+	}
+
+	return NULL;
+}
+
+static struct airtag_record *allocate_record(void)
+{
+	uint32_t oldest_seen = UINT32_MAX;
+	size_t oldest_index = 0;
+
+	for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+		if (!records[i].in_use) {
+			return &records[i];
+		}
+
+		if (records[i].last_seen_s < oldest_seen) {
+			oldest_seen = records[i].last_seen_s;
+			oldest_index = i;
+		}
+	}
+
+	return &records[oldest_index];
+}
+
+static void remember_airtag(const bt_addr_le_t *addr, int8_t rssi,
+			    uint8_t status_byte, uint8_t battery_level)
+{
+	struct airtag_record *record = find_record(addr);
+	const uint32_t now_s = uptime_seconds();
+
+	if (record == NULL) {
+		record = allocate_record();
+		memset(record, 0, sizeof(*record));
+		record->in_use = true;
+		bt_addr_le_copy(&record->addr, addr);
+		record->first_seen_s = now_s;
+	}
+
+	record->rssi = rssi;
+	record->status_byte = status_byte;
+	record->battery_level = battery_level;
+	record->last_seen_s = now_s;
+
+	if (!record->seen_this_report) {
+		record->seen_this_report = true;
+		if (record->reports_seen < UINT8_MAX) {
+			record->reports_seen++;
+		}
+	}
+}
+
+static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
+			 struct net_buf_simple *ad)
+{
+	struct parse_context ctx = {
+		.matched_airtag = false,
+		.status_byte = 0,
+		.battery_level = 0xff,
+#if IS_ENABLED(CONFIG_AIRGUARD_DEBUG_APPLE_PAYLOADS)
+		.saw_apple_payload = false,
+		.saw_find_my_payload = false,
+		.apple_payload_len = 0,
+#endif
+	};
+
+	if (type == BT_GAP_ADV_TYPE_SCAN_RSP) {
+		return;
+	}
+
+	bt_data_parse(ad, apple_find_my_data_cb, &ctx);
+
+	if (ctx.matched_airtag) {
+		remember_airtag(addr, rssi, ctx.status_byte, ctx.battery_level);
+#if IS_ENABLED(CONFIG_AIRGUARD_DEBUG_APPLE_PAYLOADS)
+	} else if (ctx.saw_apple_payload) {
+		char addr_string[BT_ADDR_LE_STR_LEN];
+
+		bt_addr_le_to_str(addr, addr_string, sizeof(addr_string));
+		printk("Debug Apple payload from %s RSSI %d%s: ",
+		       addr_string, rssi, ctx.saw_find_my_payload ? " FindMy-like" : "");
+		for (uint8_t i = 0; i < ctx.apple_payload_len; i++) {
+			printk("%02x", ctx.apple_payload[i]);
+		}
+		printk("\n");
+#endif
+	}
+}
+
+static bool is_following_candidate(const struct airtag_record *record)
+{
+	uint32_t observed_for_s;
+
+	if (!record->in_use || !record->seen_this_report) {
+		return false;
+	}
+
+	if (record->reports_seen < FOLLOWING_MIN_REPORTS) {
+		return false;
+	}
+
+	observed_for_s = record->last_seen_s - record->first_seen_s;
+	return observed_for_s >= FOLLOWING_MIN_SECONDS;
+}
+
+static void reset_report_marks(void)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+		records[i].seen_this_report = false;
+	}
+}
+
+static void print_report(void)
+{
+	size_t nearby_count = 0;
+	size_t following_count = 0;
+	char addr_string[BT_ADDR_LE_STR_LEN];
+
+	for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+		if (records[i].in_use && records[i].seen_this_report) {
+			nearby_count++;
+			if (is_following_candidate(&records[i])) {
+				following_count++;
+			}
+		}
+	}
+
+	printk("\n========== AirGuard nRF54L15 DK report %u ==========\n", report_number);
+	printk("Scan window: %u seconds, scan period: %u seconds\n",
+	       SCAN_WINDOW_SECONDS, SCAN_PERIOD_SECONDS);
+	printk("Apple AirTag-class devices nearby: %u\n", (unsigned int)nearby_count);
+
+	if (nearby_count == 0) {
+		printk("No AirTag-class advertisements were detected in this scan.\n");
+	} else {
+		for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+			const struct airtag_record *record = &records[i];
+			uint32_t observed_for_s;
+
+			if (!record->in_use || !record->seen_this_report) {
+				continue;
+			}
+
+			bt_addr_le_to_str(&record->addr, addr_string, sizeof(addr_string));
+			observed_for_s = record->last_seen_s - record->first_seen_s;
+
+			printk("- ID/address: %s | RSSI: %d dBm | battery: %s | reports: %u | observed: %u min | status: 0x%02x\n",
+			       addr_string, record->rssi,
+			       battery_to_string(record->battery_level),
+			       record->reports_seen,
+			       (unsigned int)(observed_for_s / 60),
+			       record->status_byte);
+		}
+	}
+
+	printk("\nAirTags that may be following you:\n");
+	if (following_count == 0) {
+		printk("None based on the repeated-presence heuristic.\n");
+	} else {
+		for (size_t i = 0; i < ARRAY_SIZE(records); i++) {
+			const struct airtag_record *record = &records[i];
+
+			if (!is_following_candidate(record)) {
+				continue;
+			}
+
+			bt_addr_le_to_str(&record->addr, addr_string, sizeof(addr_string));
+			printk("- %s has appeared in %u reports over %u minutes.\n",
+			       addr_string, record->reports_seen,
+			       (unsigned int)((record->last_seen_s - record->first_seen_s) / 60));
+		}
+	}
+
+	printk("====================================================\n");
+}
 
 int main(void)
 {
-	printk("Find My Emulation — key rotation every %lu ms, %d keys\n",
-	       ROTATION_INTERVAL_MS, NUM_KEYS);
+	int err;
+	const struct bt_le_scan_param scan_param = {
+		.type = BT_LE_SCAN_TYPE_PASSIVE,
+		.options = BT_LE_SCAN_OPT_NONE,
+		.interval = BT_GAP_SCAN_FAST_INTERVAL,
+		.window = BT_GAP_SCAN_FAST_WINDOW,
+	};
 
-	int err = bt_enable(NULL);
-	if (err) {
-		printk("bt_enable failed (err %d)\n", err);
-		return 0;
-	}
-	printk("Bluetooth initialized\n");
+	printk("AirGuard nRF54L15 DK starting\n");
+	printk("Initializing Bluetooth subsystem...\n");
 
-	/* Create a BLE identity with address derived from key[0] */
-	bt_addr_le_t addr;
-	fill_addr(0, &addr);
-
-	adv_id = bt_id_create(&addr, NULL);
-	if (adv_id < 0) {
-		printk("bt_id_create failed (err %d)\n", adv_id);
+	err = bt_enable(NULL);
+	if (err != 0) {
+		printk("Bluetooth init failed: %d\n", err);
 		return 0;
 	}
 
-	set_payload(0);
+	printk("Bluetooth ready. Scanning every %u seconds.\n", SCAN_PERIOD_SECONDS);
 
-	err = start_advertising();
-	if (err) {
-		return 0;
+	while (true) {
+		report_number++;
+		reset_report_marks();
+
+		printk("\nStarting AirTag scan %u...\n", report_number);
+		err = bt_le_scan_start(&scan_param, device_found);
+		if (err != 0) {
+			printk("Failed to start BLE scan: %d\n", err);
+			k_sleep(K_SECONDS(SCAN_PERIOD_SECONDS));
+			continue;
+		}
+
+		k_sleep(K_SECONDS(SCAN_WINDOW_SECONDS));
+
+		err = bt_le_scan_stop();
+		if (err != 0) {
+			printk("Failed to stop BLE scan cleanly: %d\n", err);
+		}
+
+		print_report();
+		k_sleep(K_SECONDS(SCAN_PERIOD_SECONDS - SCAN_WINDOW_SECONDS));
 	}
 
-	print_status(0);
-	printk("Next rotation in %lu ms\n", ROTATION_INTERVAL_MS);
-
-	/* Rotation thread handles everything from here. */
 	return 0;
 }

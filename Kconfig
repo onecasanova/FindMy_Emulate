@@ -1,0 +1,13 @@
+menu "AirGuard nRF54L15 DK"
+
+config AIRGUARD_DEBUG_APPLE_PAYLOADS
+	bool "Print non-matching Apple manufacturer payloads"
+	default n
+	help
+	  Print Apple manufacturer data that the scanner hears but does not
+	  classify as an AirTag-class Find My advertisement. This is useful when
+	  checking whether nearby Apple devices are advertising a different payload.
+
+endmenu
+
+source "Kconfig.zephyr"

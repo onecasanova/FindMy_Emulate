@@ -1,7 +1,7 @@
-default: broadcaster
-build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build
+default: FindMy_Emulate
+build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build
 domains:
-  - name: broadcaster
-    build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/broadcaster
+  - name: FindMy_Emulate
+    build_dir: /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/FindMy_Emulate
 flash_order:
-  - broadcaster
+  - FindMy_Emulate

@@ -1,8 +1,8 @@
-/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/Kconfig/Kconfig.sysbuild.modules
-/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/Kconfig/boards/Kconfig.nrf54l15dk
-/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/Kconfig/boards/Kconfig.sysbuild
-/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/Kconfig/soc/Kconfig.soc
-/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/Kconfig/soc/Kconfig.sysbuild
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/Kconfig/Kconfig.sysbuild.modules
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/Kconfig/boards/Kconfig.nrf54l15dk
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/Kconfig/boards/Kconfig.sysbuild
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/Kconfig/soc/Kconfig.soc
+/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/Kconfig/soc/Kconfig.sysbuild
 /opt/nordic/ncs/v3.2.1/nrf/soc/nordic/Kconfig.soc
 /opt/nordic/ncs/v3.2.1/nrf/soc/nordic/Kconfig.sysbuild
 /opt/nordic/ncs/v3.2.1/nrf/soc/nordic/common/vpr/Kconfig.sysbuild

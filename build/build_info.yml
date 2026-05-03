@@ -8,18 +8,18 @@ cmake:
     qualifiers: 'nrf54l15/cpuapp'
     revision: ''
   images:
-   - name: 'broadcaster'
-     source-dir: '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster'
+   - name: 'FindMy_Emulate'
+     source-dir: '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate'
      type: 'MAIN'
   kconfig:
     files:
-     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/empty.conf'
-     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/empty.conf'
+     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/_sysbuild/empty.conf'
+     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/_sysbuild/empty.conf'
     user-files:
-     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/empty.conf'
+     - '/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/_sysbuild/empty.conf'
   sysbuild: 'true'
 version: '0.1.0'
 west:
-  command: '/opt/nordic/ncs/toolchains/322ac893fe/bin/west build --build-dir /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster --pristine --board nrf54l15dk/nrf54l15/cpuapp -- -DDEBUG_THREAD_INFO=On -DCONFIG_DEBUG_THREAD_INFO=y -Dbroadcaster_DEBUG_THREAD_INFO=On'
+  command: '/opt/nordic/ncs/toolchains/322ac893fe/bin/west build --build-dir /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build /Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate --pristine --board nrf54l15dk/nrf54l15/cpuapp -- -DDEBUG_THREAD_INFO=On -DCONFIG_DEBUG_THREAD_INFO=y -DnRF54L15dk_DEBUG_THREAD_INFO=On'
   topdir: '/opt/nordic/ncs/v3.2.1'
   version: '1.4.0'

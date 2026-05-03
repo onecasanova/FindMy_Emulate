@@ -34,6 +34,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/broadcaster/build/_sysbuild/sysbuild/images/cmake_install.cmake")
+  include("/Users/angelcasanova/Desktop/School/JHU/25-26/Spring/Embedded_Systems/project/FindMy_Emulate/build/_sysbuild/sysbuild/images/cmake_install.cmake")
 endif()
 
