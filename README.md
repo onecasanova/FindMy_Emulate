@@ -19,7 +19,7 @@ The current architecture is intentionally simple and reproducible: firmware on t
 
 ```text
 firmware/        Zephyr application source and board configuration
-host/            Optional host or edge tooling; unused by the baseline demo
+host/            Optional host validation tools, including a Bleak BLE scanner
 cloud/           Optional cloud integration; unused by the baseline demo
 docs/            Hardware notes, measurements, diagrams, and project notes
 scripts/         Reproducibility and measurement helper scripts
@@ -28,6 +28,34 @@ intro.md         Advertisement-style project introduction
 ```
 
 Generated directories such as `build/` and local environments such as `emb/` are intentionally ignored.
+
+## Host Validation Scanner
+
+The `host/bleak_scan.py` script is an optional second-source validator for the firmware's serial output. Run it on a Linux or Windows computer with Bluetooth LE support while the nRF54L15 DK is scanning. The script uses Python's `bleak` package to scan for Apple manufacturer data and prints nearby Apple BLE devices, RSSI values, payload lengths, payload bytes, and Find My Offline Finding payload checks. This lets you confirm that the Apple devices reported by the DK serial monitor are actually present in the same area.
+
+Use a Python virtual environment so the `bleak` dependency does not affect your system Python.
+
+Linux:
+
+```sh
+cd host
+python3 -m venv .venv
+source .venv/bin/activate
+pip install bleak
+python bleak_scan.py
+```
+
+Windows PowerShell:
+
+```powershell
+cd host
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install bleak
+python bleak_scan.py
+```
+
+To validate a demo, place the host computer near the DK, run the script, and compare the Apple devices and RSSI values printed by `bleak_scan.py` against the DK serial report. Matching Apple manufacturer data provides an independent check that nearby Apple BLE devices are present. The script is intended for Linux and Windows; macOS is not recommended because CoreBluetooth filters some Apple manufacturer data before user-space scanners can read it.
 
 ## Hardware Details
 
@@ -95,13 +123,37 @@ For a battery build, document:
 
 ### Other Software
 
-No host or cloud software is required for the baseline demo. If host tools are added, place them under `host/` and include language versions, dependencies, and lock files in that directory.
+No host or cloud software is required for the baseline firmware demo. The repository also includes `host/bleak_scan.py`, an optional second-hand validation scanner that runs on a Linux or Windows computer with Bluetooth LE support. It scans for Apple manufacturer data with Python's `bleak` package and prints nearby Apple BLE advertisers so you can compare them against the devices reported by the nRF54L15 DK serial monitor.
+
+Use a virtual environment for the host scanner:
+
+```sh
+cd host
+python3 -m venv .venv
+source .venv/bin/activate
+pip install bleak
+python bleak_scan.py
+```
+
+On Windows PowerShell:
+
+```powershell
+cd host
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install bleak
+python bleak_scan.py
+```
+
+The script is intended for Linux and Windows. macOS is not recommended for this validation path because CoreBluetooth filters some Apple manufacturer data before it reaches user-space applications.
 
 Tested OS assumptions:
 
-- macOS or Linux development host with Nordic Connect SDK installed.
+- macOS or Linux development host with Nordic Connect SDK installed for firmware builds.
+- Linux or Windows host with Bluetooth LE support for `host/bleak_scan.py`.
 - USB access to the DK debugger and serial port.
 - `west`, CMake, Ninja, and Nordic command-line flashing tools available from the NCS environment.
+- Python 3 and `bleak` for the optional host-side validation scanner.
 
 ### Programming and Debugging Tools
 
@@ -233,6 +285,13 @@ Functional test:
 3. Capture serial logs for at least 15 minutes.
 4. Confirm that repeated sightings appear in multiple reports.
 5. Confirm that a device seen in at least 3 reports spanning at least 10 minutes appears in the "may be following" section.
+
+Host-side validation:
+
+1. On a Linux or Windows computer near the DK, install `bleak` in a Python virtual environment.
+2. Run `python host/bleak_scan.py` from the repository root, or run `python bleak_scan.py` from inside `host/`.
+3. Compare the Apple devices and RSSI values printed by the host scanner with the DK serial reports.
+4. Treat matching Apple manufacturer data as a second source confirming that nearby Apple BLE devices are actually present.
 
 Range test:
 
